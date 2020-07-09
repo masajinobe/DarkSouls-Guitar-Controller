@@ -2,16 +2,29 @@ import numpy as np
 import pyaudio
 import warnings
 import keyboard
+from configparser import ConfigParser
 from pynput.mouse import Button, Controller
 
 # Warnings
 warnings.simplefilter("ignore", DeprecationWarning)
 
-NOTE_MIN = 40       # E2
-NOTE_MAX = 71       # B4
-FSAMP = 22050       # Sampling frequency in Hz
-FRAME_SIZE = 256   # samples per frame
-FRAMES_PER_FFT = 32  # FFT takes average across how many frames?
+# Settings
+config = ConfigParser()
+config.read('settings.ini')
+
+note_min = 40        # E2
+note_max = 83        # B5
+
+# Sampling frequency in Hz
+FSAMP = int(config.get('settings', 'FSAMP'))
+
+# Samples per frame
+FRAME_SIZE = int(config.get('settings', 'FRAME_SIZE'))
+
+# FFT takes average across how many frames?
+FRAMES_PER_FFT = int(config.get('settings', 'FRAMES_PER_FFT'))
+
+channel = int(config.get('settings', 'channel'))
 
 ######################################################################
 # Derived quantities from constants above. Note that as
@@ -20,12 +33,12 @@ FRAMES_PER_FFT = 32  # FFT takes average across how many frames?
 # new sounds.
 
 SAMPLES_PER_FFT = FRAME_SIZE * FRAMES_PER_FFT
-FREQ_STEP = float(FSAMP) / SAMPLES_PER_FFT
+freq_step = float(FSAMP) / SAMPLES_PER_FFT
 
 ######################################################################
 # For printing out notes
 
-NOTE_NAMES = 'E F F# G G# A A# B C C# D D#'.split()
+note_names = 'E F F# G G# A A# B C C# D D#'.split()
 
 
 ######################################################################
@@ -33,15 +46,15 @@ NOTE_NAMES = 'E F F# G G# A A# B C C# D D#'.split()
 # https://newt.phys.unsw.edu.au/jw/notes.html
 
 def freq_to_number(f):
-    return 71 + 12 * np.log2(f / 493.88)
+    return 83 + 12 * np.log2(f / 987.77)
 
 
 def number_to_freq(n):
-    return 493.88 * 2.0**((n - 71) / 12.0)
+    return 987.77 * 2.0**((n - 83) / 12.0)
 
 
 def note_name(n):
-    return NOTE_NAMES[n % NOTE_MIN % len(NOTE_NAMES)] + str(int(n / 12 - 1))
+    return note_names[n % note_min % len(note_names)] + str(int(n / 12 - 1))
 
 ######################################################################
 # Ok, ready to go now.
@@ -51,11 +64,11 @@ def note_name(n):
 
 
 def note_to_fftbin(n):
-    return number_to_freq(n) / FREQ_STEP
+    return number_to_freq(n) / freq_step
 
 
-imin = max(0, int(np.floor(note_to_fftbin(NOTE_MIN - 1))))
-imax = min(SAMPLES_PER_FFT, int(np.ceil(note_to_fftbin(NOTE_MAX + 1))))
+imin = max(0, int(np.floor(note_to_fftbin(note_min - 1))))
+imax = min(SAMPLES_PER_FFT, int(np.ceil(note_to_fftbin(note_max + 1))))
 
 # Allocate space to run an FFT.
 buf = np.zeros(SAMPLES_PER_FFT, dtype=np.float32)
@@ -63,7 +76,7 @@ num_frames = 0
 
 # Initialize audio
 stream = pyaudio.PyAudio().open(format=pyaudio.paInt16,
-                                channels=1,
+                                channels=channel,
                                 rate=FSAMP,
                                 input=True,
                                 frames_per_buffer=FRAME_SIZE)
@@ -74,7 +87,8 @@ stream.start_stream()
 window = 0.5 * (1 - np.cos(np.linspace(0, 2 * np.pi, SAMPLES_PER_FFT, False)))
 
 # Print initial text
-print('sampling at', FSAMP, 'Hz with max resolution of', FREQ_STEP, 'Hz')
+print('Sampling at', FSAMP, 'Hz with max resolution of',
+      freq_step, 'Hz,', 'samples per FFT', SAMPLES_PER_FFT)
 print()
 
 # As long as we are getting data:
@@ -88,7 +102,7 @@ while stream.is_active():
     fft = np.fft.rfft(buf * window)
 
     # Get frequency of maximum response in range
-    freq = (np.abs(fft[imin:imax]).argmax() + imin) * FREQ_STEP
+    freq = (np.abs(fft[imin:imax]).argmax() + imin) * freq_step
 
     # Get note number and nearest note
     n = freq_to_number(freq)
@@ -109,13 +123,30 @@ while stream.is_active():
         keyboard.press('W')
         print('E4 - W')
 
+    if n0 == 68:
+        keyboard.press('S')
+        print('G#4 - S')
+
+    if n0 == 65:
+        keyboard.press('O')  # Target
+        print('F4 - O')
+
+    if n0 == 74:
+        keyboard.press('E')  # Use Item
+        print('D5 - E')
+
+    if n0 == 72:
+        keyboard.press('Q')  # Action
+        print('C5 - Q')
+
     if n0 == 67:
         mouse.move(-20, 0)
         print('G4 - Look Left')
 
+    if n0 == 59:
+        mouse.click(Button.left)
+        print('B3 - Mouse left click!')
+
     if n0 == 69:
         mouse.move(20, 0)
         print('A4 - Look Right')
-
-    elif n0 == 44:
-        keyboard.release('W')
