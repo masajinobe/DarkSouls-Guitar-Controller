@@ -1,9 +1,10 @@
 import numpy as np
 import pyaudio
 import warnings
-import keyboard
+import pyautogui
+import pydirectinput
+import time
 from configparser import ConfigParser
-from pynput.mouse import Button, Controller
 
 # Warnings
 warnings.simplefilter("ignore", DeprecationWarning)
@@ -12,8 +13,8 @@ warnings.simplefilter("ignore", DeprecationWarning)
 config = ConfigParser()
 config.read('settings.ini')
 
-note_min = 40        # E2
-note_max = 83        # B5
+NOTE_MIN = 64  # E4
+NOTE_MAX = 88  # E6
 
 # Sampling frequency in Hz
 FSAMP = int(config.get('settings', 'FSAMP'))
@@ -40,21 +41,21 @@ freq_step = float(FSAMP) / SAMPLES_PER_FFT
 
 note_names = 'E F F# G G# A A# B C C# D D#'.split()
 
-
 ######################################################################
 # These three functions are based upon this very useful webpage:
 # https://newt.phys.unsw.edu.au/jw/notes.html
 
+
 def freq_to_number(f):
-    return 83 + 12 * np.log2(f / 987.77)
+    return 88 + 12 * np.log2(f / 1318.51)
 
 
 def number_to_freq(n):
-    return 987.77 * 2.0**((n - 83) / 12.0)
+    return 1318.51 * 2.0**((n - 88) / 12.0)
 
 
 def note_name(n):
-    return note_names[n % note_min % len(note_names)] + str(int(n / 12 - 1))
+    return note_names[n % NOTE_MIN % len(note_names)] + str(int(n / 12 - 1))
 
 ######################################################################
 # Ok, ready to go now.
@@ -67,8 +68,8 @@ def note_to_fftbin(n):
     return number_to_freq(n) / freq_step
 
 
-imin = max(0, int(np.floor(note_to_fftbin(note_min - 1))))
-imax = min(SAMPLES_PER_FFT, int(np.ceil(note_to_fftbin(note_max + 1))))
+imin = max(0, int(np.floor(note_to_fftbin(NOTE_MIN - 1))))
+imax = min(SAMPLES_PER_FFT, int(np.ceil(note_to_fftbin(NOTE_MAX + 1))))
 
 # Allocate space to run an FFT.
 buf = np.zeros(SAMPLES_PER_FFT, dtype=np.float32)
@@ -87,8 +88,8 @@ stream.start_stream()
 window = 0.5 * (1 - np.cos(np.linspace(0, 2 * np.pi, SAMPLES_PER_FFT, False)))
 
 # Print initial text
-print('Sampling at', FSAMP, 'Hz with max resolution of',
-      freq_step, 'Hz,', 'samples per FFT', SAMPLES_PER_FFT)
+print('Sampling at', FSAMP,
+      'Hz with max resolution of', freq_step, 'Hz')
 print()
 
 # As long as we are getting data:
@@ -109,44 +110,47 @@ while stream.is_active():
     n0 = int(round(n))
 
     # Console output once we have a full buffer
-    num_frames += 1
+    # num_frames += 1
 
     # Debug
     # if num_frames >= FRAMES_PER_FFT:
     #     print('number {:7.2f} freq: {:7.2f} Hz     note: {:>3s} {:+.2f}'.format(n,
     #                                                                             freq, note_name(n0), n - n0))
 
-    # Controller
-    mouse = Controller()
+    # if n0 == 64:
+    #     pydirectinput.keyDown('w')
+    #     print('E4 - W down')
+    #     time.sleep(15)
+    #     pydirectinput.keyUp('w')
+    #     print('E4 - W up')
+    #     n0 = 73
 
-    if n0 == 64:
-        keyboard.press('W')
-        print('E4 - W')
+    # if n0 == 68:
+    #     pydirectinput.keyDown('s')
+    #     print('G#4 - S')
+    #     time.sleep(2)
+    #     pydirectinput.keyUp('s')
+    #     print('G#4 - S up')
 
-    if n0 == 68:
-        keyboard.press('S')
-        print('G#4 - S')
+    # if n0 == 65:
+    #     pydirectinput.press('o')  # Target
+    #     print('F4 - O pressed')
+    #     time.sleep(5)
 
-    if n0 == 65:
-        keyboard.press('O')  # Target
-        print('F4 - O')
+    # if n0 == 74:
+    #     pydirectinput.press('e')  # Use Item
+    #     print('D5 - E pressed')
+    #     time.sleep(5)
 
-    if n0 == 74:
-        keyboard.press('E')  # Use Item
-        print('D5 - E')
+    # if n0 == 72:
+    #     pydirectinput.press('q')  # Action
+    #     print('C5 - Q pressed')
+    #     time.sleep(5)
 
-    if n0 == 72:
-        keyboard.press('Q')  # Action
-        print('C5 - Q')
+    # if n0 == 67:
+    #     pydirectinput.move(-20, 0)
+    #     print('G4 - Look Left')
 
-    if n0 == 67:
-        mouse.move(-20, 0)
-        print('G4 - Look Left')
-
-    if n0 == 59:
-        mouse.click(Button.left)
-        print('B3 - Mouse left click!')
-
-    if n0 == 69:
-        mouse.move(20, 0)
-        print('A4 - Look Right')
+    # if n0 == 69:
+    #     pydirectinput.move(20, 0)
+    #     print('A4 - Look Right')
