@@ -1,4 +1,4 @@
-# Script 6-strings guitar for Dark Souls
+# DSGC - 6-strings Guitar controller for Dark Souls🎵
 
 ![gif](https://user-images.githubusercontent.com/52446061/87093551-ccf7f680-c256-11ea-89e1-062f88f82a21.gif)
 
