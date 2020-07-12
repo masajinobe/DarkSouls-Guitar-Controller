@@ -19,11 +19,16 @@ def key_control(n0):
         print('F4 - O pressed')
 
     if n0 == 74:
-        pydirectinput.press('e')  # Use Item
+        pydirectinput.press('e')  # Action
         print('D5 - E pressed')
 
+    if n0 == 73:
+        pydirectinput.keyUp('w')  # Stop
+        pydirectinput.keyUp('s')
+        print('C#5 - Stop')
+
     if n0 == 72:
-        pydirectinput.press('q')  # Action
+        pydirectinput.press('q')  # Use Item
         print('C5 - Q pressed')
 
     if n0 == 67:
