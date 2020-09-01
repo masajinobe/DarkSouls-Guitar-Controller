@@ -1,7 +1,7 @@
 from pywinauto.keyboard import send_keys
 from colorama import init, Fore, Back
+import pywinauto
 import keyboard
-import time
 
 init()  # Colorama
 
@@ -35,14 +35,14 @@ def control_move(note):
         keyboard.press_and_release('q')  # Use Item
         print(Fore.BLACK + Back.RED + 'C5 - Q pressed')
 
-    # if note == 67:
-    #     pywinauto.mouse.move(-10, 0)
-    #     print('G4 - Look Left')
+    if note == 67:
+        pywinauto.mouse.move(coords=(-10, 0))
+        print(Fore.BLACK + Back.WHITE + 'G4 - Look Left')
 
-    # if n0 == 63:
-    #     pywinauto.mouse.click(button='left')
-    #     print('D#4 - Click!')
+    if note == 63:
+        pywinauto.mouse.click(button='left')
+        print(Fore.BLACK + Back.WHITE + 'D#4 - Click!')
 
-    # if n0 == 69:
-    #     mouse.move(10, 0)
-    #     print('A4 - Look Right')
+    if note == 69:
+        pywinauto.mouse.move(coords=(10, 0))
+        print(Fore.BLACK + Back.WHITE + 'A4 - Look Right')
